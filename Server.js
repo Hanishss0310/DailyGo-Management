@@ -42,8 +42,29 @@ app.use(
   })
 );
 
+/* ===================== CORS ALLOW LIST ===================== */
+const allowedOrigins = [
+  "https://api-dg3-core-inv5.adminpaymentdailygo.co.in",
+  "https://adminpaymentdailygo.co.in",
+  "https://dailygo-office-manage.firebaseapp.com",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allows Postman / server calls
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("❌ CORS blocked: Not allowed by server"));
+      }
+    },
+    credentials: true,
+  })
+);
+
 /* ===================== GLOBAL MIDDLEWARE ===================== */
-app.use(cors({ origin: true }));
 app.use(express.json({ limit: "30mb" }));
 app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 app.use(morgan("dev"));
@@ -77,12 +98,10 @@ app.use(
   require("./Routes/attendance.reports.routes")
 );
 
-
 app.use(
   "/api/attendance",
   require("./Routes/attendance.archives.routes")
 );
-
 
 app.use(
   "/api/attendance",
@@ -103,7 +122,7 @@ app.use((req, res) => {
 
 /* ===================== GLOBAL ERROR HANDLER ===================== */
 app.use((err, req, res, next) => {
-  console.error("🔥 Server Error:", err);
+  console.error("🔥 Server Error:", err.message);
   res.status(err.status || 500).json({
     message: err.message || "Internal Server Error",
   });

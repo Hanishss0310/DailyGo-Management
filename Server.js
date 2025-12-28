@@ -8,7 +8,7 @@ const path = require("path");
 
 /* ===================== APP INIT ===================== */
 const app = express();
-app.set("trust proxy", 1); // ⭐ REQUIRED for Nginx + express-rate-limit
+app.set("trust proxy", 1); 
 const PORT = 4000;
 
 /* ===================== DATABASE ===================== */
@@ -24,8 +24,39 @@ mongoose
     process.exit(1);
   });
 
-/* ===================== SECURITY ===================== */
-/* 🔑 IMPORTANT: allow images across origins */
+/* ===================== 1. LOGGING ===================== */
+app.use(morgan("dev")); 
+
+/* ===================== 2. CORS (FIXED) ===================== */
+const allowedOrigins = [
+  "https://api-dg3-core-inv5.adminpaymentdailygo.co.in",
+  "https://adminpaymentdailygo.co.in",
+  "https://dailygo-office-manage.firebaseapp.com",
+  "http://localhost:3000"
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      console.log("❌ CORS BLOCKED Origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  exposedHeaders: ["Content-Disposition"],
+};
+
+// Apply CORS globally
+app.use(cors(corsOptions));
+
+// 🔴 FINAL FIX: Use Regex /.*/ instead of string "*" to prevent path-to-regexp crash
+app.options(/.*/, cors(corsOptions)); 
+
+/* ===================== 3. SECURITY ===================== */
 app.use(
   helmet({
     crossOriginResourcePolicy: {
@@ -34,84 +65,35 @@ app.use(
   })
 );
 
+/* ===================== 4. RATE LIMITING ===================== */
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 300,
     standardHeaders: true,
     legacyHeaders: false,
-  })
-);
-
-/* ===================== CORS ALLOW LIST ===================== */
-const allowedOrigins = [
-  "https://api-dg3-core-inv5.adminpaymentdailygo.co.in",
-  "https://adminpaymentdailygo.co.in",
-  "https://dailygo-office-manage.firebaseapp.com",
-  "http://localhost:3000" // optional for local development
-];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allows Postman / server-to-server
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        console.log("❌ CORS BLOCKED:", origin);
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    exposedHeaders: ["Content-Disposition"], // ⭐ REQUIRED for PDF/file download
+    message: "Too many requests, please try again later.",
   })
 );
 
 /* ===================== GLOBAL MIDDLEWARE ===================== */
 app.use(express.json({ limit: "30mb" }));
 app.use(express.urlencoded({ extended: true, limit: "30mb" }));
-app.use(morgan("dev"));
 
 /* ===================== STATIC FILES ===================== */
-/* ✅ REQUIRED for attendance photos */
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))
 );
 
 /* ===================== ROUTES ===================== */
-
-// 🔐 Bill login (OTP)
 app.use("/api/bill-login", require("./Routes/billLogin.routes"));
-
-// 🧾 Attendance (OTP + mark attendance)
 app.use("/api/attendance", require("./Routes/attendance.routes"));
-
-// 📊 Dashboard attendance
-app.use(
-  "/api/attendance",
-  require("./Routes/attendance.dashboard.routes")
-);
-
-// 👨‍💼 Admin OTP login
+app.use("/api/attendance", require("./Routes/attendance.dashboard.routes"));
 app.use("/api/admin", require("./Routes/adminAuth.routes"));
-
-app.use(
-  "/api/attendance",
-  require("./Routes/attendance.reports.routes")
-);
-
-app.use(
-  "/api/attendance",
-  require("./Routes/attendance.archives.routes")
-);
-
-app.use(
-  "/api/attendance",
-  require("./Routes/attendance.monthly.routes")
-);
-
+app.use("/api/attendance", require("./Routes/attendance.reports.routes"));
+app.use("/api/attendance", require("./Routes/attendance.archives.routes"));
+app.use("/api/attendance", require("./Routes/attendance.monthly.routes"));
 app.use("/api/bills", require("./Routes/billRoutes"));
 
 /* ===================== HEALTH CHECK ===================== */
@@ -124,8 +106,11 @@ app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-/* ===================== GLOBAL ERROR HANDLER ===================== */
+/* ===================== ERROR HANDLER ===================== */
 app.use((err, req, res, next) => {
+  if (err.message === "Not allowed by CORS") {
+     return res.status(403).json({ message: "CORS Blocked: Origin not allowed" });
+  }
   console.error("🔥 Server Error:", err.message);
   res.status(err.status || 500).json({
     message: err.message || "Internal Server Error",

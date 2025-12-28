@@ -8,6 +8,7 @@ const path = require("path");
 
 /* ===================== APP INIT ===================== */
 const app = express();
+app.set("trust proxy", 1); // ⭐ REQUIRED for Nginx + express-rate-limit
 const PORT = 4000;
 
 /* ===================== DATABASE ===================== */
@@ -47,20 +48,23 @@ const allowedOrigins = [
   "https://api-dg3-core-inv5.adminpaymentdailygo.co.in",
   "https://adminpaymentdailygo.co.in",
   "https://dailygo-office-manage.firebaseapp.com",
+  "http://localhost:3000" // optional for local development
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allows Postman / server calls
+      if (!origin) return callback(null, true); // allows Postman / server-to-server
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       } else {
-        return callback(new Error("❌ CORS blocked: Not allowed by server"));
+        console.log("❌ CORS BLOCKED:", origin);
+        return callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
+    exposedHeaders: ["Content-Disposition"], // ⭐ REQUIRED for PDF/file download
   })
 );
 

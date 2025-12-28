@@ -3,6 +3,7 @@ const router = express.Router();
 const Bill = require("../Models/Bill");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 // --- CONFIG: Multer ---
 const storage = multer.diskStorage({
@@ -13,17 +14,23 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// --- ROUTE 1: CREATE BILL (Data Only) ---
-// Generates the ID and saves the text data
+/* ===================== ALLOWED ORIGINS FOR PDF ===================== */
+const allowedOrigins = [
+  "https://api-dg3-core-inv5.adminpaymentdailygo.co.in",
+  "https://adminpaymentdailygo.co.in",
+  "https://dailygo-office-manage.firebaseapp.com",
+  "http://localhost:3000"
+];
+
+/* ===================== ROUTE 1: CREATE BILL ===================== */
 router.post("/", async (req, res) => {
   try {
     const { execId, storeName, salesExecutive } = req.body;
 
-    // 1. Generate Invoice Number
     const now = new Date();
     const yy = now.getFullYear().toString().slice(-2);
     const mm = (now.getMonth() + 1).toString().padStart(2, "0");
-    const datePrefix = `${yy}${mm}`; 
+    const datePrefix = `${yy}${mm}`;
     const invoicePrefix = `${datePrefix}-${execId}-`;
 
     const lastBill = await Bill.findOne({
@@ -32,21 +39,17 @@ router.post("/", async (req, res) => {
 
     let nextSequence = "001";
     if (lastBill) {
-      const lastSequenceStr = lastBill.invoiceNo.split("-").pop();
-      const lastSequenceNum = parseInt(lastSequenceStr, 10);
-      nextSequence = (lastSequenceNum + 1).toString().padStart(3, "0");
+      const lastSeq = parseInt(lastBill.invoiceNo.split("-").pop());
+      nextSequence = (lastSeq + 1).toString().padStart(3, "0");
     }
-    const newInvoiceNo = `${invoicePrefix}${nextSequence}`;
 
-    // 2. Save Data (Without PDF path initially)
-    const newBill = new Bill({
+    const newBill = await Bill.create({
       ...req.body,
-      invoiceNo: newInvoiceNo,
-      pdfPath: "" // Will be updated in step 2
+      invoiceNo: `${invoicePrefix}${nextSequence}`,
+      pdfPath: ""
     });
 
-    const savedBill = await newBill.save();
-    res.status(201).json(savedBill); // Return the ID to frontend
+    res.status(201).json(newBill);
 
   } catch (error) {
     console.error("Error creating bill:", error);
@@ -54,8 +57,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// --- ROUTE 2: UPLOAD PDF (Update Bill) ---
-// Finds the bill by ID and adds the PDF file path
+/* ===================== ROUTE 2: UPLOAD PDF ===================== */
 router.put("/:id/pdf", upload.single("pdf"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
@@ -73,14 +75,45 @@ router.put("/:id/pdf", upload.single("pdf"), async (req, res) => {
   }
 });
 
-// --- ROUTE 3: GET ALL ---
-router.get("/", async (req, res) => {
-    try {
-      const bills = await Bill.find().sort({ createdAt: -1 });
-      res.json(bills);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch bills" });
+/* ===================== ROUTE 3: DOWNLOAD PDF (FIXED CORS) ===================== */
+router.get("/:id/pdf", async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id);
+    if (!bill || !bill.pdfPath) {
+      return res.status(404).json({ error: "PDF not found" });
     }
+
+    const filePath = path.join(__dirname, "..", bill.pdfPath);
+
+    // --- ⭐ CORS FIX for file/PDF download ---
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+    }
+
+    // --- send file ---
+    res.download(filePath, path.basename(filePath), (err) => {
+      if (err) {
+        console.error("Error sending PDF:", err);
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching PDF:", error);
+    res.status(500).json({ error: "Failed to download PDF" });
+  }
+});
+
+/* ===================== ROUTE 4: GET ALL ===================== */
+router.get("/", async (req, res) => {
+  try {
+    const bills = await Bill.find().sort({ createdAt: -1 });
+    res.json(bills);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch bills" });
+  }
 });
 
 module.exports = router;

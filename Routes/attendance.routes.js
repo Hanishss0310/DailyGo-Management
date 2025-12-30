@@ -15,6 +15,11 @@ const ALLOWED_USERS = [
   { name: "JITU", email: "jitutanti634@gmail.com", mobile: "7397068491" },
   { name: "HANISH", email: "hanishgowda7795@gmail.com", mobile: "9449201025" },
   { name: "YASHASWINI", email: "yashaswini01025@gmail.com", mobile: "9449201025" },
+  { name: "ANURAG", email: "chowdhuryanurag96@gmail.com", mobile: "9019426166" },
+  { name: "AJAY", email: "ajoyk3594@gmail.com", mobile: "8134012458" },
+  { name: "BIJOY", email: "karmakarbijoy580@gmail.com", mobile: "7349120741" },
+  { name: "JITU", email: "jitutanti634@gmail.com", mobile: "7397068491" },
+  { name: "KIRAN GS", email: "kirangowdakiru0198@gmail.com", mobile: "9036210198" },
 ];
 
 /* ================= MAIL CONFIG ================= */

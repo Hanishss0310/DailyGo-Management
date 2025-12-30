@@ -40,6 +40,17 @@ const operators = [
     otpExpiry: null,
   },
   {
+  id: "4",
+  name: "Kiran GS",
+  email: "kirangowdakiru0198@gmail.com",
+  password: "Kiran@DG2025",
+  mobile: "9036210198",
+  isVerified: false,
+  otp: null,
+  otpExpiry: null,
+  },
+
+  {
     id: "4",
     name: "Shivaraj N",
     email: "shivarajpulagam@okicici",

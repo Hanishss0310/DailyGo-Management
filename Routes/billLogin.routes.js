@@ -40,18 +40,17 @@ const operators = [
     otpExpiry: null,
   },
   {
-  id: "4",
-  name: "Kiran GS",
-  email: "kirangowdakiru0198@gmail.com",
-  password: "Kiran@DG2025",
-  mobile: "9036210198",
-  isVerified: false,
-  otp: null,
-  otpExpiry: null,
-  },
-
-  {
     id: "4",
+    name: "Kiran GS",
+    email: "kirangowdakiru0198@gmail.com",
+    password: "Kiran@DG2025",
+    mobile: "9036210198",
+    isVerified: false,
+    otp: null,
+    otpExpiry: null,
+  },
+  {
+    id: "5",
     name: "Shivaraj N",
     email: "shivarajpulagam@okicici",
     password: "Shivaraj@DG2025",
@@ -61,7 +60,7 @@ const operators = [
     otpExpiry: null,
   },
   {
-    id: "5",
+    id: "6",
     name: "Hanish S.S",
     email: "hanishgowda7795@gmail.com",
     password: "Hanish@DG2025",
@@ -176,7 +175,7 @@ router.post("/verify-otp", (req, res) => {
   const token = jwt.sign(
     { id: operator.id, role: "operator" },
     process.env.JWT_SECRET || "DEV_SECRET",
-    { expiresIn: "1d" }
+    { expiresIn: "3h" } // ✅ Auto logout after 3 hours
   );
 
   return res.json({

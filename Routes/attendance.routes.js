@@ -10,16 +10,21 @@ const router = express.Router();
 /* ================= ALLOWED USERS ================= */
 const ALLOWED_USERS = [
   { name: "ANURAG", email: "chowdhuryanurag96@gmail.com", mobile: "9019426166" },
-  { name: "AJAY", email: "ajoyK3594@gmail.com", mobile: "8134012458" },
-  { name: "BIJOY", email: "karmakarbijoy580@gmail.com", mobile: "7349120741" },
-  { name: "JITU", email: "jitutanti634@gmail.com", mobile: "7397068491" },
-  { name: "HANISH", email: "hanishgowda7795@gmail.com", mobile: "9449201025" },
-  { name: "YASHASWINI", email: "yashaswini01025@gmail.com", mobile: "9449201025" },
-  { name: "ANURAG", email: "chowdhuryanurag96@gmail.com", mobile: "9019426166" },
+  { name: "SHASHI KUMAR", email: "kshashigowda91@gmail.com", mobile: "9035224169" },
   { name: "AJAY", email: "ajoyk3594@gmail.com", mobile: "8134012458" },
   { name: "BIJOY", email: "karmakarbijoy580@gmail.com", mobile: "7349120741" },
   { name: "JITU", email: "jitutanti634@gmail.com", mobile: "7397068491" },
+  { name: "HANISH", email: "hanishgowda7795@gmail.com", mobile: "9449201025" },
+
+  { name: "FYNTRAXIS", email: "managefyntraxis@gmail.com", mobile: "9449201025" },
+  { name: "TEAM FYNTRAXIS", email: "team@fyntraxis.in", mobile: "9449201025" },
+
   { name: "KIRAN GS", email: "kirangowdakiru0198@gmail.com", mobile: "9036210198" },
+
+  { name: "SHASHI KUMAR K", email: "kshashigowda91@gmail.com", mobile: "9035224169" },
+  { name: "M PAVAN KUMAR", email: "mpavank2@gmail.com", mobile: "9019589074" },
+  { name: "SHRIDHARA M", email: "kittyshri47@gmail.com", mobile: "9620740080" },
+  { name: "SHIVARAJ N", email: "shivarajpulagam@okicici", mobile: "9880051298" }
 ];
 
 /* ================= MAIL CONFIG ================= */
